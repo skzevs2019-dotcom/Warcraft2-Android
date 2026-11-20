@@ -42,6 +42,18 @@ jobs:
         with:
           gradle-version: '7.3.3'
 
+      - name: Repair obsolete Hunter archive reference
+        working-directory: upstream-stratagus
+        shell: bash
+        run: |
+          set -euo pipefail
+          hunter_url="https://github.com/drodin/hunter/archive/refs/heads/pr.sdl_master.zip"
+          curl --fail --location --retry 3 "$hunter_url" --output /tmp/hunter-pr-sdl.zip
+          hunter_sha1="$(sha1sum /tmp/hunter-pr-sdl.zip | cut -d ' ' -f 1)"
+          sed -i 's#https://github.com/drodin/hunter/archive/refs/heads/pr.sdl.zip#https://github.com/drodin/hunter/archive/refs/heads/pr.sdl_master.zip#' CMakeLists.txt
+          sed -i "s#SHA1 \"7146bee57e5e8df23e392b509091eff3468f1c80\"#SHA1 \"$hunter_sha1\"#" CMakeLists.txt
+          echo "Hunter archive SHA1: $hunter_sha1"
+
       - name: Build upstream debug APK
         working-directory: upstream-stratagus
         run: gradle -p android assembleDebug --stacktrace

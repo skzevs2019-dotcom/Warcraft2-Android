@@ -39,9 +39,15 @@ jobs:
 
       - name: Build host tolua++ generator
         run: |
+          set -euxo pipefail
           sudo apt-get update
-          sudo apt-get install -y cmake g++ make liblua5.1-0-dev
-          git clone --depth 1 --branch 1.0.93 https://github.com/LuaDist/toluapp.git /tmp/toluapp
+          sudo apt-get install -y cmake g++ make curl tar liblua5.1-0-dev
+          mkdir -p /tmp/toluapp
+          curl --fail --location --retry 3 \
+            https://codeload.github.com/LuaDist/toluapp/tar.gz/refs/tags/1.0.93 \
+            --output /tmp/toluapp.tar.gz
+          echo "0a1ff87cb74e7531aec57e2a7cfdf282116647dea3b46223e3cc7c362b55b5bb  /tmp/toluapp.tar.gz" | sha256sum --check
+          tar -xzf /tmp/toluapp.tar.gz --strip-components=1 -C /tmp/toluapp
           sed -i 's/VERSION 2.8/VERSION 3.5/' /tmp/toluapp/CMakeLists.txt
           cmake -S /tmp/toluapp -B /tmp/toluapp/build \
             -DLUA_INCLUDE_DIR=/usr/include/lua5.1 \
@@ -49,6 +55,7 @@ jobs:
           cmake --build /tmp/toluapp/build --parallel 2
           sudo install -m 0755 /tmp/toluapp/build/toluapp '/usr/local/bin/tolua++'
           command -v 'tolua++'
+          'tolua++' -v || true
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4

@@ -1,0 +1,87 @@
+name: Build Wargus extraction tools
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/wargus-tools.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-wartool:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Wargus source and dependencies
+        uses: actions/checkout@v4
+        with:
+          repository: Wargus/wargus
+          ref: master
+          submodules: recursive
+          path: wargus
+
+      - name: Checkout Stratagus engine and dependencies
+        uses: actions/checkout@v4
+        with:
+          repository: Wargus/stratagus
+          ref: master
+          submodules: recursive
+          path: stratagus
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake file pkg-config \
+            libx11-dev libxext-dev libxrender-dev libxrandr-dev libxi-dev \
+            libxfixes-dev libxcursor-dev libxss-dev libxtst-dev libsm-dev \
+            libgl-dev libegl-dev libgles-dev libglx-dev \
+            libwayland-dev libxkbcommon-dev libxkbcommon-x11-dev libdecor-0-dev \
+            libdrm-dev libgbm-dev libudev-dev libdbus-1-dev \
+            libasound2-dev libpulse-dev
+
+      - name: Build Stratagus host engine
+        run: |
+          cmake -S stratagus -B stratagus/build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_VENDORED_LUA=ON \
+            -DBUILD_VENDORED_SDL=ON \
+            -DBUILD_VENDORED_MEDIA_LIBS=ON \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DGAMEDIR=/usr/bin \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          cmake --build stratagus/build --parallel 2
+
+      - name: Configure Wargus extraction tools
+        run: |
+          cmake -S wargus -B wargus/build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_VENDORED_LIBS=ON \
+            -DSTRATAGUS=stratagus/build/stratagus \
+            -DSTRATAGUS_INCLUDE_DIR="$GITHUB_WORKSPACE/stratagus/gameheaders" \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DGAMEDIR=/usr/bin \
+            -DGAMEDIRABS= \
+            -DDATA_PATH="../../share/games/stratagus/wargus" \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+
+      - name: Build wartool and pudconvert
+        run: cmake --build wargus/build --target wartool pudconvert --parallel 2 --config Release
+
+      - name: Verify extraction tool binaries
+        run: |
+          test -x wargus/build/wartool
+          test -x wargus/build/pudconvert
+          wargus/build/wartool -V
+          wargus/build/wartool -h || true
+          mkdir -p extraction-tools
+          cp wargus/build/wartool wargus/build/pudconvert extraction-tools/
+
+      - name: Upload host extraction tools
+        uses: actions/upload-artifact@v4
+        with:
+          name: wargus-host-extraction-tools
+          path: extraction-tools/*
+          if-no-files-found: error

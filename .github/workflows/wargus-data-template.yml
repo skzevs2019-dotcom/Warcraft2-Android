@@ -1,0 +1,57 @@
+name: Wargus v3.3.2 data template
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/wargus-data-template.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Wargus v3.3.2
+        uses: actions/checkout@v4
+        with:
+          repository: Wargus/wargus
+          ref: 420efb4256574ca2afb995ea3badfea542c416ac
+          path: wargus
+
+      - name: Assemble import template
+        run: |
+          set -euo pipefail
+          mkdir -p package
+          cp -a wargus/scripts package/
+          cp -a wargus/campaigns package/
+          cp -a wargus/maps package/
+          cp -a wargus/shaders package/
+          cp wargus/COPYING package/
+          test -f package/scripts/stratagus.lua
+          cat > package/README_RU.md <<'EOF'
+          # Шаблон игровых сценариев Wargus 3.3.2
+
+          Источник: https://github.com/Wargus/wargus
+          Версия: v3.3.2
+          Commit: 420efb4256574ca2afb995ea3badfea542c416ac
+
+          Это только открытые сценарии, кампании, карты и шейдеры Wargus.
+          Это НЕ полный архив данных игры: для запуска нужны ресурсы, извлечённые из легальной копии Warcraft II.
+          Содержимое этого шаблона предназначено для объединения с конвертированными ресурсами Warcraft II.
+          После объединения в корне архива должен находиться путь scripts/stratagus.lua.
+          EOF
+          cd package
+          zip -qr ../Wargus_v3.3.2_Scripts_Template.zip .
+          cd ..
+          unzip -l Wargus_v3.3.2_Scripts_Template.zip | grep -E 'scripts/stratagus.lua|campaigns/'
+          sha256sum Wargus_v3.3.2_Scripts_Template.zip
+
+      - name: Upload template artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wargus-v3.3.2-scripts-template
+          path: Wargus_v3.3.2_Scripts_Template.zip
+          if-no-files-found: error
+          retention-days: 14

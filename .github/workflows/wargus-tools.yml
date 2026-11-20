@@ -40,7 +40,8 @@ jobs:
             libgl-dev libegl-dev libgles-dev libglx-dev \
             libwayland-dev libxkbcommon-dev libxkbcommon-x11-dev libdecor-0-dev \
             libdrm-dev libgbm-dev libudev-dev libdbus-1-dev \
-            libasound2-dev libpulse-dev
+            libasound2-dev libpulse-dev \\
+            libpng-dev zlib1g-dev libbz2-dev
 
       - name: Build Stratagus host engine
         run: |

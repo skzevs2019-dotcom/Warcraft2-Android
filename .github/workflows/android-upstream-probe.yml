@@ -74,6 +74,26 @@ jobs:
           sed -i "s#SHA1 \"7146bee57e5e8df23e392b509091eff3468f1c80\"#SHA1 \"$hunter_sha1\"#" CMakeLists.txt
           echo "Hunter archive SHA1: $hunter_sha1"
 
+      - name: Configure SDL2 Hunter build with PIC
+        working-directory: upstream-stratagus
+        shell: bash
+        run: |
+          set -euxo pipefail
+          hunter_config="cmake/Hunter/config.cmake"
+          cat >> "$hunter_config" <<'EOF'
+
+          # Hunter builds SDL2 as a static archive linked into libstratagus.so.
+          # Compile the SDL2 objects as position-independent code for Android.
+          hunter_config(
+              SDL2
+              VERSION "2.0.22-22d6e09"
+              CMAKE_ARGS
+                  CMAKE_C_FLAGS=-fPIC
+                  CMAKE_CXX_FLAGS=-fPIC
+          )
+          EOF
+          grep -A7 'hunter_config(' "$hunter_config" | tail -n 8
+
       - name: Enable position-independent code for Hunter dependencies
         working-directory: upstream-stratagus
         shell: bash

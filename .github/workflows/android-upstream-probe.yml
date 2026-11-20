@@ -74,6 +74,14 @@ jobs:
           sed -i "s#SHA1 \"7146bee57e5e8df23e392b509091eff3468f1c80\"#SHA1 \"$hunter_sha1\"#" CMakeLists.txt
           echo "Hunter archive SHA1: $hunter_sha1"
 
+      - name: Enable position-independent code for Hunter dependencies
+        working-directory: upstream-stratagus
+        shell: bash
+        run: |
+          set -euxo pipefail
+          toolchain_template="cmake/template/toolchain.cmake.in"
+          grep -q 'CMAKE_POSITION_INDEPENDENT_CODE' "$toolchain_template" || printf '\n# Android shared-library dependencies must be built as PIC.\nset(CMAKE_POSITION_INDEPENDENT_CODE ON)\n' >> "$toolchain_template"
+
       - name: Build upstream debug APK
         working-directory: upstream-stratagus
         run: gradle -p android assembleDebug --stacktrace

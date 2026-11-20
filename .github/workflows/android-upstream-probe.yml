@@ -37,11 +37,18 @@ jobs:
         run: |
           sdkmanager "platforms;android-32" "build-tools;32.0.0" "ndk;23.2.8568313" "cmake;3.22.1"
 
-      - name: Install host tolua++ generator
+      - name: Build host tolua++ generator
         run: |
           sudo apt-get update
-          sudo apt-get install -y tolua++ liblua5.1-0-dev
-          command -v tolua++
+          sudo apt-get install -y cmake g++ make liblua5.1-0-dev
+          git clone --depth 1 --branch 1.0.93 https://github.com/LuaDist/toluapp.git /tmp/toluapp
+          sed -i 's/VERSION 2.8/VERSION 3.5/' /tmp/toluapp/CMakeLists.txt
+          cmake -S /tmp/toluapp -B /tmp/toluapp/build \
+            -DLUA_INCLUDE_DIR=/usr/include/lua5.1 \
+            -DLUA_LIBRARY=/usr/lib/x86_64-linux-gnu/liblua5.1.so
+          cmake --build /tmp/toluapp/build --parallel 2
+          sudo install -m 0755 /tmp/toluapp/build/toluapp '/usr/local/bin/tolua++'
+          command -v 'tolua++'
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4

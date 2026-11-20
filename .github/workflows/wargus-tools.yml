@@ -59,7 +59,7 @@ jobs:
         run: |
           cmake -S wargus -B wargus/build \
             -DCMAKE_BUILD_TYPE=Release \
-            -DENABLE_VENDORED_LIBS=ON \
+            -DENABLE_VENDORED_LIBS=OFF \
             -DSTRATAGUS=stratagus/build/stratagus \
             -DSTRATAGUS_INCLUDE_DIR="$GITHUB_WORKSPACE/stratagus/gameheaders" \
             -DCMAKE_INSTALL_PREFIX=/usr \

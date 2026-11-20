@@ -37,6 +37,12 @@ jobs:
         run: |
           sdkmanager "platforms;android-32" "build-tools;32.0.0" "ndk;23.2.8568313" "cmake;3.22.1"
 
+      - name: Install host tolua++ generator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tolua++ liblua5.1-0-dev
+          command -v tolua++
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:

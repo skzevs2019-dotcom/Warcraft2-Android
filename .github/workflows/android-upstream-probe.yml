@@ -1,6 +1,10 @@
 name: Android upstream build probe
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/android-upstream-probe.yml'
   workflow_dispatch:
 
 permissions:

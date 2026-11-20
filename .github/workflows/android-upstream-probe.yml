@@ -1,0 +1,50 @@
+name: Android upstream build probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-upstream-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project notes
+        uses: actions/checkout@v4
+
+      - name: Checkout Android Stratagus source
+        uses: actions/checkout@v4
+        with:
+          repository: drodin/Stratagus
+          ref: android
+          path: upstream-stratagus
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android native toolchains
+        run: |
+          sdkmanager "platforms;android-32" "build-tools;32.0.0" "ndk;23.2.8568313" "cmake;3.22.1"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '7.3.3'
+
+      - name: Build upstream debug APK
+        working-directory: upstream-stratagus
+        run: gradle -p android assembleDebug --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: stratagus-upstream-debug-apk
+          path: upstream-stratagus/android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
